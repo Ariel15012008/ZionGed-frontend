@@ -87,7 +87,7 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-3 text-black hover:bg-white/30"
+                  className="flex items-center gap-3 text-black hover:bg-white/30 cursor-pointer"
                 >
                   <span className="hidden text-sm font-medium md:block">{displayName}</span>
                   <Avatar className="h-8 w-8">
