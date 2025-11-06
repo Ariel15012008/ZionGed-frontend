@@ -55,7 +55,7 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={setOpen} >
       {/* Botão flutuante com estilo minimalista e elegante */}
       <SheetTrigger asChild>
         <button
@@ -99,7 +99,7 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
               group-hover:text-white
             "
           >
-            <Menu className="h-5 w-5 transition-transform group-hover:scale-110" />
+            <Menu className="h-5 w-5 transition-transform group-hover:scale-110 cursor-pointer" />
           </span>
         </button>
       </SheetTrigger>
@@ -123,7 +123,7 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
                 <Link
                   to={item.to}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm",
+                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm ",
                     active
                       ? "bg-green-100 text-green-900"
                       : "hover:bg-slate-100 text-slate-700"
