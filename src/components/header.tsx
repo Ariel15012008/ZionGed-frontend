@@ -106,11 +106,11 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/me")}>
+                <DropdownMenuItem onClick={() => navigate("/me")} className="cursor-pointer">
                   Meu perfil
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
