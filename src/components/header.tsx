@@ -71,7 +71,6 @@ export default function Header() {
     const parts = n.split(/\s+/).slice(0, 2);
     return parts.map(p => p[0]?.toUpperCase()).join("");
   })();
-  
 
   return (
     <header className="flex h-[65px] w-full items-center bg-linear-to-r from-[#42F51F] via-[#48cf3e] to-[#318844]">
