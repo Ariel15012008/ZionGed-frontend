@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/utils/axiosInstance";
+import { useUser } from "@/contexts/UserContext";
 
-// shadcn/ui
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-// ícones
 import { FaUserAlt } from "react-icons/fa";
 
 type MeResponse = {
@@ -32,14 +31,15 @@ export default function Header() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const { logout } = useUser(); // usa o logout centralizado
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const { data } = await api.get<MeResponse>("/auth/me"); // envia cookie automaticamente
+        const { data } = await api.get<MeResponse>("/auth/me");
         if (mounted) setMe(data);
       } catch {
-        // se não autenticado, mantém null (pode redirecionar se quiser)
         if (mounted) setMe(null);
       } finally {
         if (mounted) setLoading(false);
@@ -51,13 +51,7 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch {
-      // ignorar
-    } finally {
-      navigate("/login", { replace: true });
-    }
+    await logout(); // o próprio contexto já chama /auth/logout, volta pra "/" e dá reload
   };
 
   const displayName =
@@ -69,7 +63,7 @@ export default function Header() {
     const n = (me?.pessoa?.nome || "").trim();
     if (!n) return "US";
     const parts = n.split(/\s+/).slice(0, 2);
-    return parts.map(p => p[0]?.toUpperCase()).join("");
+    return parts.map((p) => p[0]?.toUpperCase()).join("");
   })();
 
   return (
@@ -89,7 +83,9 @@ export default function Header() {
                   variant="ghost"
                   className="flex items-center gap-3 text-black hover:bg-white/30 cursor-pointer"
                 >
-                  <span className="hidden text-sm font-medium md:block">{displayName}</span>
+                  <span className="hidden text-sm font-medium md:block">
+                    {displayName}
+                  </span>
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-white/80 text-black">
                       {initials || <FaUserAlt size={16} />}
@@ -106,11 +102,17 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/me")} className="cursor-pointer">
+                <DropdownMenuItem
+                  onClick={() => navigate("/me")}
+                  className="cursor-pointer"
+                >
                   Meu perfil
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600 cursor-pointer"
+                >
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -118,7 +120,7 @@ export default function Header() {
           ) : (
             <Button
               variant="secondary"
-              className="bg-white/80 text-black hover:bg-white"
+              className="bg-white/80 text-black hover:bg-white cursor-pointer"
               onClick={() => navigate("/login")}
             >
               Entrar
