@@ -9,7 +9,6 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import {
-  Menu,
   Home,
   FileText,
   Search,
@@ -55,14 +54,15 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen} >
-      {/* Botão flutuante com estilo minimalista e elegante */}
+    <Sheet open={open} onOpenChange={setOpen}>
+      {/* Botão flutuante */}
       <SheetTrigger asChild>
         <button
           aria-label="Abrir menu"
           className={cn(
-            "group fixed left-3 z-60 h-11 w-11 rounded-full overflow-hidden",
+            "group fixed left-3 z-50 h-12 w-12 rounded-full overflow-hidden",
             "transition-all duration-300 ease-out",
+            "shadow-md shadow-slate-400/40",
             "active:scale-95 hover:scale-105 hover:cursor-pointer",
             topClass,
             open
@@ -70,36 +70,49 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
               : "scale-100 opacity-100"
           )}
         >
-          {/* Sombra suave */}
-          <span className="absolute inset-0 rounded-full shadow-lg shadow-slate-400/30" />
+          {/* Anel externo com gradiente verde */}
+          <span className="absolute inset-0 rounded-full bg-linear-to-br from-emerald-500 via-emerald-600 to-emerald-700" />
 
-          {/* Fundo gradiente sutil */}
-          <span className="absolute inset-0 rounded-full bg-linear-to-br from-slate-700 via-slate-800 to-slate-900" />
+          {/* Círculo interno claro (efeito “glass”) */}
+          <span className="absolute inset-0.5 rounded-full bg-white/95 backdrop-blur-sm border border-white/70" />
 
-          {/* Camada de vidro/brilho */}
-          <span className="absolute inset-[1.5px] rounded-full bg-[#9b9797] backdrop-blur-sm" />
-
-          {/* Brilho diagonal no hover */}
+          {/* Brilho diagonal sutil */}
           <span
             className="
               pointer-events-none absolute -left-1/2 top-0 h-full w-2/3
               translate-x-[-60%] rotate-12
-              bg-linear-to-r from-white/0 via-white/20 to-white/0
-              transition-transform duration-500 ease-out
+              bg-linear-to-r from-white/0 via-white/40 to-white/0
+              opacity-0 group-hover:opacity-100
+              transition-all duration-500 ease-out
               group-hover:translate-x-[180%]
             "
           />
 
-          {/* Ícone */}
-          <span
-            className="
-              relative z-10 flex h-full w-full items-center justify-center
-              text-slate-100
-              transition-all duration-300 ease-out
-              group-hover:text-white
-            "
-          >
-            <Menu className="h-5 w-5 transition-transform group-hover:scale-110 cursor-pointer" />
+          {/* Ícone em barras */}
+          <span className="relative z-10 flex h-full w-full items-center justify-center">
+            <span className="flex flex-col items-center justify-center gap-1">
+              <span
+                className="
+                  h-0.5 w-4 rounded-full bg-slate-700
+                  transition-all duration-300 ease-out
+                  group-hover:bg-slate-900 group-hover:w-5
+                "
+              />
+              <span
+                className="
+                  h-0.5 w-4 rounded-full bg-slate-700
+                  transition-all duration-300 ease-out
+                  group-hover:bg-slate-900 group-hover:w-6
+                "
+              />
+              <span
+                className="
+                  h-0.5 w-4 rounded-full bg-slate-700
+                  transition-all duration-300 ease-out
+                  group-hover:bg-slate-900 group-hover:w-5
+                "
+              />
+            </span>
           </span>
         </button>
       </SheetTrigger>
@@ -109,11 +122,11 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
         side="left"
         className="w-[300px] p-0 transition-transform duration-200 data-[state=closed]:duration-200"
       >
-        <SheetHeader className="p-4 border-b">
-          <SheetTitle className="text-left">ZionGed</SheetTitle>
+        <SheetHeader className="p-4 border-b bg-white">
+          <SheetTitle className="text-left text-slate-800">ZionGed</SheetTitle>
         </SheetHeader>
 
-        <nav className="p-2">
+        <nav className="p-2 bg-white">
           {NAV.map((item) => {
             const active = item.exact
               ? pathname === item.to
@@ -123,10 +136,10 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
                 <Link
                   to={item.to}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm ",
+                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm",
                     active
-                      ? "bg-green-100 text-green-900"
-                      : "hover:bg-slate-100 text-slate-700"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-100"
+                      : "hover:bg-slate-50 text-slate-700"
                   )}
                 >
                   {item.icon}
@@ -137,7 +150,7 @@ export default function SideMenu({ topClass = "top-24" }: SideMenuProps) {
           })}
         </nav>
 
-        <div className="mt-auto p-2 border-t">
+        <div className="mt-auto p-2 border-t bg-white">
           <SheetClose asChild>
             <button
               type="button"

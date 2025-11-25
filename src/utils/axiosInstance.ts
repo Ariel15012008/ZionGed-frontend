@@ -58,7 +58,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       if (!refreshPromise) {
-        refreshPromise = api.post("/user/refresh").finally(() => {
+        refreshPromise = api.post("/auth/refresh").finally(() => {
           refreshPromise = null;
         });
       }

@@ -1,0 +1,67 @@
+/* src/pages/home/PublicHome.css */
+/* Animações específicas da PublicHome */
+
+@keyframes public-home-pulse-slow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes public-home-card-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes public-home-badge-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes public-home-ping-once {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  80% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* utilitários para usar na PublicHome */
+
+.public-home-animate-pulse-slow {
+  animation: public-home-pulse-slow 5s ease-in-out infinite;
+}
+
+.public-home-animate-card-float {
+  animation: public-home-card-float 9s ease-in-out infinite;
+}
+
+.public-home-animate-badge-float {
+  animation: public-home-badge-float 7s ease-in-out infinite;
+}
+
+.public-home-animate-ping-once {
+  animation: public-home-ping-once 1.2s cubic-bezier(0, 0, 0.2, 1) 1;
+}
