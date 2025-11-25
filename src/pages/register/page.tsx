@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "@/utils/axiosInstance";
 
 // shadcn + date-fns
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Eye, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -58,6 +58,7 @@ export default function RegisterPage() {
   // usuario
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // pessoa
   const [nome, setNome] = useState("");
@@ -157,7 +158,9 @@ export default function RegisterPage() {
               <h2 className="text-2xl font-semibold text-slate-900">Dados de acesso</h2>
 
               <div className="space-y-2">
-                <label htmlFor="email" className="font-medium text-slate-700">Email</label>
+                <label htmlFor="email" className="font-medium text-slate-700">
+                  Email
+                </label>
                 <input
                   id="email"
                   type="email"
@@ -171,17 +174,28 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="senha" className="font-medium text-slate-700">Senha</label>
-                <input
-                  id="senha"
-                  type="password"
-                  placeholder="••••••••"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  className="w-full rounded-md bg-[#D9D9D9] px-4 py-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none ring-1 ring-transparent focus:ring-[#a3a3a3]"
-                  autoComplete="new-password"
-                  required
-                />
+                <label htmlFor="senha" className="font-medium text-slate-700">
+                  Senha
+                </label>
+                <div className="relative">
+                  <input
+                    id="senha"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    className="w-full rounded-md bg-[#D9D9D9] px-4 py-3 pr-10 text-sm text-slate-800 placeholder:text-slate-500 outline-none ring-1 ring-transparent focus:ring-[#a3a3a3]"
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-900 focus:outline-none hover:cursor-pointer"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -190,7 +204,9 @@ export default function RegisterPage() {
               <h2 className="text-2xl font-semibold text-slate-900">Dados pessoais</h2>
 
               <div className="space-y-2">
-                <label htmlFor="nome" className="font-medium text-slate-700">Nome</label>
+                <label htmlFor="nome" className="font-medium text-slate-700">
+                  Nome
+                </label>
                 <input
                   id="nome"
                   type="text"
@@ -208,7 +224,9 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label htmlFor="cpf" className="font-medium text-slate-700">CPF</label>
+                  <label htmlFor="cpf" className="font-medium text-slate-700">
+                    CPF
+                  </label>
                   <input
                     id="cpf"
                     type="text"
@@ -266,7 +284,7 @@ export default function RegisterPage() {
                         selected={selectedDate ?? undefined}
                         onSelect={(d) => {
                           setDataNascimento(toISO(d ?? null)); // mantém YYYY-MM-DD
-                          setOpenCalendar(false);               // fecha ao selecionar
+                          setOpenCalendar(false); // fecha ao selecionar
                         }}
                         disabled={(date) => date > new Date()}
                         initialFocus
@@ -278,7 +296,9 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="telefone" className="font-medium text-slate-700">Telefone</label>
+                <label htmlFor="telefone" className="font-medium text-slate-700">
+                  Telefone
+                </label>
                 <input
                   id="telefone"
                   type="tel"
@@ -307,7 +327,9 @@ export default function RegisterPage() {
 
             <p className="text-center text-sm text-slate-600">
               Já tem conta?{" "}
-              <Link to="/login" className="text-green-700 underline">Entrar</Link>
+              <Link to="/login" className="text-green-700 underline">
+                Entrar
+              </Link>
             </p>
           </form>
         </div>

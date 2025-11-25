@@ -2,19 +2,22 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "@/utils/axiosInstance";
+import { Eye, EyeOff } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // opcional: normalizar CPF para só dígitos quando for CPF
+  const { refreshUser } = useUser();
+
   const normalizeUser = (u: string) => {
     const trimmed = u.trim();
-    // se só dígitos e tamanho entre 11 e 14, assume CPF e tira máscara
     return /^\d[\d.\-\/]*$/.test(trimmed) ? trimmed.replace(/\D+/g, "") : trimmed;
   };
 
@@ -34,11 +37,13 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // cookies HttpOnly serão definidos pela API (withCredentials=true no axiosInstance)
       await api.post("/auth/login", payload);
-      
-      // sucesso → vá para o app
-      navigate("/", { replace: true });
+
+      // atualiza o contexto /auth/me
+      await refreshUser();
+
+      // manda direto para a home privada
+      navigate("/home", { replace: true });
     } catch (err: any) {
       const detail =
         err?.response?.data?.detail ||
@@ -65,7 +70,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Usuário */}
             <div className="space-y-2">
               <label htmlFor="username" className="font-medium text-slate-700">
                 Usuário (CPF ou e-mail)
@@ -81,35 +85,45 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Senha */}
             <div className="space-y-2">
               <label htmlFor="password" className="font-medium text-slate-700">
                 Senha
               </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md bg-[#D9D9D9] px-4 py-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none ring-1 ring-transparent focus:ring-[#a3a3a3]"
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-md bg-[#D9D9D9] px-4 py-3 pr-10 text-sm text-slate-800 placeholder:text-slate-500 outline-none ring-1 ring-transparent focus:ring-[#a3a3a3]"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-900 focus:outline-none hover:cursor-pointer"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
-            {/* Botão Entrar */}
             <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-md bg-linear-to-r from-[#4b933d] via-[#48cf3e] to-[#318844] hover:from-[#77b66c] hover:to-[#2a7a3e] hover:cursor-pointer text-black font-medium py-3 transition-colors disabled:opacity-70"
+                className="w-full rounded-md bg-linear-to-r from-[#4b933d] via-[#48cf3e] to-[#318844] hover:from-[#77b66c] hover:to-[#2a7a3e] text-black font-medium py-3 transition-colors disabled:opacity-70 hover:cursor-pointer"
               >
                 {loading ? "Entrando..." : "Entrar"}
               </button>
             </div>
+
             <p className="text-center text-sm text-slate-600">
               Não tem conta?{" "}
-              <Link to="/register" className="text-green-700 underline">Registrar</Link>
+              <Link to="/register" className="text-green-700 underline">
+                Registrar
+              </Link>
             </p>
           </form>
         </div>
