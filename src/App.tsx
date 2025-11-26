@@ -3,8 +3,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider, useUser } from "@/contexts/UserContext";
 
-import Home from "@/pages/publicHome/page";       // home pública (não logado)
-import HomeSecurity from "@/pages/home/page";     // home protegida (logado)
+import Home from "@/pages/publicHome/page"; // home pública (não logado)
+import HomeSecurity from "@/pages/home/page"; // home protegida (logado)
 import Login from "@/pages/login/page";
 import Cadastro from "@/pages/register/page";
 
@@ -12,7 +12,8 @@ import { PublicRoute } from "./lib/PublicRoute";
 import { ProtectedRoute } from "./lib/ProtectedRoute";
 import LoadingScreen from "@/components/LoadingScreen";
 import DocumentEditPage from "@/pages/Docs/EditDocument";
-import { Toaster } from "sonner"; 
+import DocumentCreatePage from "@/pages/Docs/CreateDocument";
+import { Toaster } from "sonner";
 
 // Decide o que fazer na raiz "/"
 function RootRoute() {
@@ -56,7 +57,11 @@ function App() {
           {/* 3) ROTAS PROTEGIDAS (somente autenticado) */}
           <Route element={<ProtectedRoute />}>
             <Route path="/home" element={<HomeSecurity />} />
-            <Route path="/documents/:uuid/edit" element={<DocumentEditPage />} />
+            <Route
+              path="/documents/:uuid/edit"
+              element={<DocumentEditPage />}
+            />
+            <Route path="/documents/create" element={<DocumentCreatePage />} />
           </Route>
 
           {/* 4) Qualquer outra rota volta para "/" */}

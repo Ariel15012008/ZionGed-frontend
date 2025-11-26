@@ -27,7 +27,11 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { label: "Início", to: "/", icon: <Home className="h-4 w-4" />, exact: true },
-  { label: "Documentos", to: "/docs", icon: <FileText className="h-4 w-4" /> },
+  {
+    label: "Criar Documentos",
+    to: "/documents/create",
+    icon: <FileText className="h-4 w-4" />,
+  },
   {
     label: "Pesquisas salvas",
     to: "/saved-searches",

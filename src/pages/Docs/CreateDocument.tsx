@@ -1,33 +1,68 @@
 // src/pages/docs/CreateDocument.tsx
-import { useState } from "react";
+import { useState, useRef, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import SideMenu from "@/components/side-menu";
 import api from "@/utils/axiosInstance";
 import { toast } from "sonner";
+import { ArrowLeft, Loader2, UploadCloud } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+function formatCpf(digits: string): string {
+  const onlyDigits = digits.replace(/\D/g, "").slice(0, 11);
+
+  if (onlyDigits.length <= 3) {
+    return onlyDigits;
+  }
+  if (onlyDigits.length <= 6) {
+    return `${onlyDigits.slice(0, 3)}.${onlyDigits.slice(3)}`;
+  }
+  if (onlyDigits.length <= 9) {
+    return `${onlyDigits.slice(0, 3)}.${onlyDigits.slice(
+      3,
+      6
+    )}.${onlyDigits.slice(6)}`;
+  }
+  return `${onlyDigits.slice(0, 3)}.${onlyDigits.slice(
+    3,
+    6
+  )}.${onlyDigits.slice(6, 9)}-${onlyDigits.slice(9, 11)}`;
+}
+
+function formatCompetencia(digits: string): string {
+  const onlyDigits = digits.replace(/\D/g, "").slice(0, 6);
+
+  if (onlyDigits.length <= 4) {
+    return onlyDigits;
+  }
+  return `${onlyDigits.slice(0, 4)}-${onlyDigits.slice(4)}`;
+}
 
 export default function CreateDocument() {
-  const [tipoDocumento, setTipoDocumento] = useState("Holerite");
-  const [clienteId, setClienteId] = useState("5238");
+  const [tipoDocumento, setTipoDocumento] = useState("");
+  const [clienteId, setClienteId] = useState("");
   const [cpf, setCpf] = useState("");
-  const [competencia, setCompetencia] = useState(""); // formato: 2025-07
-  const [dataPagamento, setDataPagamento] = useState("");
-  const [dataCriacao, setDataCriacao] = useState("");
+  const [competencia, setCompetencia] = useState(""); // exibido como YYYY-MM
+  const [owner, setOwner] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    const cpfRaw = cpf.replace(/\D/g, "");
+    const competenciaDigits = competencia.replace(/\D/g, "");
 
     if (!file) {
       toast.error("Selecione um arquivo PDF.");
       return;
     }
-    if (!cpf || !competencia) {
-      toast.error("Informe pelo menos CPF e Competência.");
+    if (cpfRaw.length !== 11 || competenciaDigits.length !== 6) {
+      toast.error("CPF deve ter 11 dígitos e Competência no formato YYYY-MM.");
       return;
     }
 
@@ -35,27 +70,15 @@ export default function CreateDocument() {
       setSaving(true);
 
       const meta: any = {
-        cliente_id: Number(clienteId),
+        cliente_id: clienteId ? Number(clienteId) : undefined,
         tags: [
           { chave: "tipo", valor: tipoDocumento },
-          { chave: "cpf", valor: cpf },
+          { chave: "cpf", valor: cpfRaw },
+          // aqui vai COM TRAÇO, exatamente como está na tela (YYYY-MM)
           { chave: "competencia", valor: competencia },
+          { chave: "Owner", valor: owner },
         ],
       };
-
-      // se quiser mandar as datas como tags extras (opcionais)
-      if (dataPagamento) {
-        meta.tags.push({
-          chave: "data_pagamento",
-          valor: dataPagamento,
-        });
-      }
-      if (dataCriacao) {
-        meta.tags.push({
-          chave: "data_criacao",
-          valor: dataCriacao,
-        });
-      }
 
       const formData = new FormData();
       formData.append("meta", JSON.stringify(meta));
@@ -81,145 +104,194 @@ export default function CreateDocument() {
     navigate(-1);
   };
 
+  const handleSelectFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleCpfChange = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    setCpf(formatCpf(digits));
+  };
+
+  const handleCompetenciaChange = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 6);
+    setCompetencia(formatCompetencia(digits));
+  };
+
+  const cpfDigits = cpf.replace(/\D/g, "");
+  const competenciaDigits = competencia.replace(/\D/g, "");
+  const isFormValid =
+    !!file && cpfDigits.length === 11 && competenciaDigits.length === 6;
+
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
       <Header />
 
-      <div className="">
+      <div>
         <SideMenu topClass="top-20" />
       </div>
 
-      <main className="flex-1">
-        <section className="w-full max-w-4xl mx-auto px-4 py-10">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="mb-4 text-sm text-emerald-700 hover:underline"
-          >
-            ← Voltar
-          </button>
-
-          <form
-            onSubmit={handleSubmit}
-            className="bg-slate-50 rounded-2xl shadow-md border border-slate-200 px-6 sm:px-8 py-6 sm:py-8"
-          >
-            <h1 className="text-lg sm:text-xl font-semibold text-center mb-6">
-              Criação de documento
-            </h1>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Tipo de documento
-                </label>
-                <select
-                  value={tipoDocumento}
-                  onChange={(e) => setTipoDocumento(e.target.value)}
-                  className="w-full rounded-md bg-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="Holerite">Holerite</option>
-                  {/* futuramente outros tipos */}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Cliente (ID)
-                </label>
-                <input
-                  type="text"
-                  value={clienteId}
-                  onChange={(e) => setClienteId(e.target.value)}
-                  className="w-full rounded-md bg-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  CPF
-                </label>
-                <input
-                  type="text"
-                  value={cpf}
-                  onChange={(e) => setCpf(e.target.value)}
-                  className="w-full rounded-md bg-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="Apenas números"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Competência (Ano-Mês)
-                </label>
-                <input
-                  type="month"
-                  value={competencia}
-                  onChange={(e) => setCompetencia(e.target.value)}
-                  className="w-full rounded-md bg-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Data de Pagamento (opcional)
-                  </label>
-                  <input
-                    type="date"
-                    value={dataPagamento}
-                    onChange={(e) => setDataPagamento(e.target.value)}
-                    className="w-full rounded-md bg-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Data de Criação (opcional)
-                  </label>
-                  <input
-                    type="date"
-                    value={dataCriacao}
-                    onChange={(e) => setDataCriacao(e.target.value)}
-                    className="w-full rounded-md bg-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Arquivo PDF
-                </label>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="w-full text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                type="submit"
-                disabled={saving}
-                className="min-w-[140px] px-6 py-2 rounded-full bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {saving ? "Salvando..." : "Concluir ✓"}
-              </button>
-
-              <button
+      <main className="flex-1 bg-slate-50">
+        <section className="w-full max-w-6xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 pb-12 flex flex-col">
+          {/* topo com botão voltar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <Button
                 type="button"
+                variant="outline"
                 onClick={handleBack}
-                className="min-w-[140px] px-6 py-2 rounded-full bg-red-100 text-red-700 text-sm font-semibold hover:bg-red-200 transition-colors"
+                className="flex items-center gap-2 border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400 shadow-sm cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 mt-10"
               >
-                Cancelar ✕
-              </button>
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
+              </Button>
             </div>
-          </form>
+          </div>
+
+          {/* card principal no mesmo estilo da tela de edição */}
+          <div className="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+            <div className="px-6 sm:px-10 pt-6 sm:pt-8 pb-4 border-b border-slate-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h1 className="text-center sm:text-left text-xl sm:text-2xl font-semibold text-slate-800">
+                  Criação de documento
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 text-center sm:text-right">
+                  Preencha os dados principais e envie o PDF para registrar no
+                  GED.
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="px-6 sm:px-10 py-6 sm:py-8 space-y-5 sm:space-y-6"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+                <FormRow label="Tipo de documento">
+                  <input
+                    type="text"
+                    value={tipoDocumento}
+                    onChange={(e) => setTipoDocumento(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                    placeholder="Ex: Holerite, Informe de Rendimentos..."
+                  />
+                </FormRow>
+
+                <FormRow label="Cliente (ID)">
+                  <input
+                    type="text"
+                    value={clienteId}
+                    onChange={(e) =>
+                      setClienteId(
+                        e.target.value.replace(/\D/g, "").slice(0, 10)
+                      )
+                    }
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
+                    placeholder="Ex: 5238"
+                    maxLength={10}
+                  />
+                </FormRow>
+
+                <FormRow label="CPF">
+                  <input
+                    type="text"
+                    value={cpf}
+                    onChange={(e) => handleCpfChange(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                  />
+                </FormRow>
+
+                <FormRow label="Competência (Ano-Mês)">
+                  <input
+                    type="text"
+                    value={competencia}
+                    onChange={(e) => handleCompetenciaChange(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
+                    placeholder="2025-07"
+                    maxLength={7}
+                  />
+                </FormRow>
+
+                <FormRow label="Owner">
+                  <input
+                    type="text"
+                    value={owner}
+                    onChange={(e) => setOwner(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
+                    placeholder="Ex: Gustavo Muniz"
+                  />
+                </FormRow>
+
+                <FormRow label="Arquivo PDF">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSelectFileClick}
+                      className="inline-flex items-center gap-2 border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400 shadow-sm cursor-pointer transition-transform duração-200 hover:-translate-y-0.5"
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      Selecionar PDF
+                    </Button>
+                    <span className="text-xs sm:text-sm text-slate-500 truncate max-w-[220px] sm:max-w-xs">
+                      {file ? file.name : "Nenhum arquivo selecionado"}
+                    </span>
+                  </div>
+                </FormRow>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Button
+                  type="submit"
+                  disabled={saving || !isFormValid}
+                  className="w-full sm:w-56 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm sm:text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-70 disabled:cursor-not-allowed shadow-sm transition-transform duração-200 hover:-translate-y-0.5 cursor-pointer"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>Concluir ✓</>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={saving}
+                  variant="outline"
+                  className="w-full sm:w-56 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm sm:text-base font-semibold border-red-500 text-red-600 bg-white hover:bg-red-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm transition-transform duração-200 hover:-translate-y-0.5 cursor-pointer"
+                >
+                  Cancelar ✕
+                </Button>
+              </div>
+            </form>
+          </div>
         </section>
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+function FormRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <span className="text-[11px] sm:text-xs font-medium tracking-wide text-slate-600 uppercase">
+        {label}
+      </span>
+      {children}
     </div>
   );
 }

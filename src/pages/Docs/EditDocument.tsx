@@ -1,10 +1,5 @@
 // src/pages/document-edit/page.tsx
-import {
-  useEffect,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -18,6 +13,35 @@ import { Button } from "@/components/ui/button";
 type LocationState = {
   doc?: DocumentRecord;
 };
+
+function formatCpf(digits: string): string {
+  const onlyDigits = digits.replace(/\D/g, "").slice(0, 11);
+
+  if (onlyDigits.length <= 3) {
+    return onlyDigits;
+  }
+  if (onlyDigits.length <= 6) {
+    return `${onlyDigits.slice(0, 3)}.${onlyDigits.slice(3)}`;
+  }
+  if (onlyDigits.length <= 9) {
+    return `${onlyDigits.slice(0, 3)}.${onlyDigits.slice(3, 6)}.${onlyDigits.slice(
+      6
+    )}`;
+  }
+  return `${onlyDigits.slice(0, 3)}.${onlyDigits.slice(3, 6)}.${onlyDigits.slice(
+    6,
+    9
+  )}-${onlyDigits.slice(9, 11)}`;
+}
+
+function formatCompetencia(digits: string): string {
+  const onlyDigits = digits.replace(/\D/g, "").slice(0, 6);
+
+  if (onlyDigits.length <= 4) {
+    return onlyDigits;
+  }
+  return `${onlyDigits.slice(0, 4)}-${onlyDigits.slice(4)}`;
+}
 
 export default function DocumentEditPage() {
   const navigate = useNavigate();
@@ -39,22 +63,48 @@ export default function DocumentEditPage() {
     }
 
     setFilename(doc.filename ?? "");
-    setTipoDocumento(getTagValue(doc, "tipo de documento"));
-    setCpf(getTagValue(doc, "cpf"));
-    setCompetencia(getTagValue(doc, "competencia"));
+
+    setTipoDocumento(
+      getTagValue(doc, "tipo de documento") || getTagValue(doc, "tipo")
+    );
+
+    const cpfValue = getTagValue(doc, "cpf");
+    setCpf(formatCpf(cpfValue));
+
+    const compValue = getTagValue(doc, "competencia");
+    setCompetencia(formatCompetencia(compValue));
+
     setOwner(getTagValue(doc, "Owner"));
   }, [doc]);
+
+  const handleCpfChange = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    setCpf(formatCpf(digits));
+  };
+
+  const handleCompetenciaChange = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 6);
+    setCompetencia(formatCompetencia(digits));
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!doc) return;
 
+    const cpfRaw = cpf.replace(/\D/g, "");
+    const competenciaRaw = competencia.replace(/\D/g, "");
+
+    if (cpfRaw.length !== 11 || competenciaRaw.length !== 6) {
+      toast.error("CPF deve ter 11 dígitos e Competência no formato YYYY-MM.");
+      return;
+    }
+
     const payload = {
       filename: filename.trim(),
       tags: [
-        { chave: "tipo de documento", valor: tipoDocumento.trim() },
-        { chave: "cpf", valor: cpf.trim() },
-        { chave: "competencia", valor: competencia.trim() },
+        { chave: "tipo", valor: tipoDocumento.trim() },
+        { chave: "cpf", valor: cpfRaw },
+        { chave: "competencia", valor: competenciaRaw },
         { chave: "Owner", valor: owner.trim() },
       ].filter((t) => t.valor !== ""),
     };
@@ -78,7 +128,10 @@ export default function DocumentEditPage() {
     navigate(-1);
   };
 
-  // estado sem doc (mesmo padrão de fundo branco da Home)
+  const cpfDigits = cpf.replace(/\D/g, "");
+  const competenciaDigits = competencia.replace(/\D/g, "");
+  const isFormValid = cpfDigits.length === 11 && competenciaDigits.length === 6;
+
   if (!doc) {
     return (
       <div className="w-full min-h-screen bg-white flex flex-col">
@@ -177,9 +230,10 @@ export default function DocumentEditPage() {
                   <input
                     type="text"
                     value={cpf}
-                    onChange={(e) => setCpf(e.target.value)}
-                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                    placeholder="00000000000"
+                    onChange={(e) => handleCpfChange(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
+                    placeholder="000.000.000-00"
+                    maxLength={14}
                   />
                 </FormRow>
 
@@ -187,9 +241,10 @@ export default function DocumentEditPage() {
                   <input
                     type="text"
                     value={competencia}
-                    onChange={(e) => setCompetencia(e.target.value)}
-                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                    onChange={(e) => handleCompetenciaChange(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
                     placeholder="2025-07"
+                    maxLength={7}
                   />
                 </FormRow>
 
@@ -198,7 +253,7 @@ export default function DocumentEditPage() {
                     type="text"
                     value={owner}
                     onChange={(e) => setOwner(e.target.value)}
-                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                    className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
                     placeholder="Gustavo Muniz"
                   />
                 </FormRow>
@@ -207,8 +262,8 @@ export default function DocumentEditPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button
                   type="submit"
-                  disabled={isSaving}
-                  className="w-full sm:w-56 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm sm:text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-70 disabled:cursor-not-allowed shadow-sm transition-transform duration-200 hover:-translate-y-0.5 cursor-pointer"
+                  disabled={isSaving || !isFormValid}
+                  className="w-full sm:w-56 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm sm:text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-70 disabled:cursor-not-allowed shadow-sm transition-transform duração-200 hover:-translate-y-0.5 cursor-pointer"
                 >
                   {isSaving ? (
                     <>
@@ -225,7 +280,7 @@ export default function DocumentEditPage() {
                   onClick={handleCancel}
                   disabled={isSaving}
                   variant="outline"
-                  className="w-full sm:w-56 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm sm:text-base font-semibold border-red-500 text-red-600 bg-white hover:bg-red-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm transition-transform duration-200 hover:-translate-y-0.5 cursor-pointer"
+                  className="w-full sm:w-56 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm sm:text-base font-semibold border-red-500 text-red-600 bg-white hover:bg-red-50 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm transition-transform duração-200 hover:-translate-y-0.5 cursor-pointer"
                 >
                   Cancelar ✕
                 </Button>
@@ -240,13 +295,7 @@ export default function DocumentEditPage() {
   );
 }
 
-function FormRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function FormRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
       <span className="text-[11px] sm:text-xs font-medium tracking-wide text-slate-600 uppercase">
