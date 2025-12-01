@@ -151,11 +151,11 @@ export default function SearchInput({
           </SelectTrigger>
           <SelectContent>
             {/* Opção manual: Busca Livre */}
-            <SelectItem value={FREE_SEARCH_KEY}>Busca Livre</SelectItem>
+            <SelectItem className="cursor-pointer" value={FREE_SEARCH_KEY}>Busca Livre</SelectItem>
 
             {/* Demais tags vindas da API */}
             {tagOptions.map((tag) => (
-              <SelectItem key={tag} value={tag}>
+              <SelectItem className="cursor-pointer" key={tag} value={tag}>
                 {tag.toUpperCase()}
               </SelectItem>
             ))}

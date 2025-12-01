@@ -2,7 +2,33 @@
 import { Link } from "react-router-dom";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import "./PublicHome.css"; // CSS específico desta tela
+import Ariel from "@/assets/Ariel.png";
+import Terra from "@/assets/Terra.png";
+import "./PublicHome.css";
+
+type FeatureCardProps = {
+  title: string;
+  description: string;
+};
+
+type TeamMember = {
+  name: string;
+  role: string;
+  photoUrl: string;
+};
+
+const TEAM_MEMBERS: TeamMember[] = [
+  {
+    name: "Ariel Cristian de Menezes",
+    role: "Desenvolvedor Frontend ",
+    photoUrl: Ariel,
+  },
+  {
+    name: "Gabriel Santos Terra",
+    role: "Desenvolvedor Backend ",
+    photoUrl: Terra,
+  }
+];
 
 export default function PublicHome() {
   return (
@@ -13,7 +39,7 @@ export default function PublicHome() {
         {/* HERO */}
         <section className="relative overflow-hidden">
           {/* fundo com gradiente + “brilho” animado */}
-          <div className="absolute inset-0 bg-linear-to-br from-[#44F01F] via-[#2ECC4A] to-[#2B8B49]" />
+          <div className="absolute inset-0 bg-linear-to-br from-[#30a716] via-[#0e3616] to-[#2B8B49]" />
           <div className="absolute -top-32 -right-24 w-80 h-80 rounded-full bg-white/10 blur-3xl public-home-animate-pulse-slow" />
           <div className="absolute -bottom-40 -left-10 w-96 h-96 rounded-full bg-white/5 blur-3xl public-home-animate-pulse-slow" />
 
@@ -34,7 +60,8 @@ export default function PublicHome() {
 
                 <p className="text-sm sm:text-base text-emerald-50/90 max-w-xl">
                   Organize holerites, benefícios, contratos e registros de ponto em um ambiente
-                  seguro, rápido e integrado. Menos papel, menos retrabalho, mais tempo para cuidar de pessoas.
+                  seguro, rápido e integrado. Menos papel, menos retrabalho, mais tempo para cuidar
+                  de pessoas.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -88,7 +115,9 @@ export default function PublicHome() {
                     <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 border border-slate-100 hover:border-emerald-300/80 hover:shadow-sm transition-all duration-300 hover:-translate-y-0.5">
                       <div>
                         <p className="text-xs font-semibold text-slate-800">Benefícios</p>
-                        <p className="text-[11px] text-slate-500">VT, VR, VA e muito mais em um só lugar</p>
+                        <p className="text-[11px] text-slate-500">
+                          VT, VR, VA e muito mais em um só lugar
+                        </p>
                       </div>
                       <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">
                         organizado
@@ -98,7 +127,9 @@ export default function PublicHome() {
                     <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 border border-slate-100 hover:border-emerald-300/80 hover:shadow-sm transition-all duration-300 hover:-translate-y-0.5">
                       <div>
                         <p className="text-xs font-semibold text-slate-800">Documentos gerais</p>
-                        <p className="text-[11px] text-slate-500">Contratos, comunicados e comprovantes</p>
+                        <p className="text-[11px] text-slate-500">
+                          Contratos, comunicados e comprovantes
+                        </p>
                       </div>
                       <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">
                         centralizado
@@ -116,7 +147,7 @@ export default function PublicHome() {
           </div>
         </section>
 
-        {/* SEÇÃO DE BENEFÍCIOS (tipo “Por que usar?”) */}
+        {/* SEÇÃO DE BENEFÍCIOS */}
         <section className="bg-white py-12 sm:py-16">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <header className="text-center max-w-2xl mx-auto mb-10">
@@ -218,28 +249,39 @@ export default function PublicHome() {
           </div>
         </section>
 
-        {/* CTA FINAL */}
-        <section className="bg-white py-12 sm:py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              Pronto para dizer adeus ao papel e ao caos de pastas?
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600">
-              Dê o próximo passo na jornada de transformação digital do seu RH.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <Link
-                to="/register"
-                className="inline-flex justify-center items-center px-6 py-3 rounded-xl bg-linear-to-r from-[#4b933d] via-[#48cf3e] to-[#318844] text-black font-semibold text-sm shadow-[0_10px_40px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_16px_50px_rgba(0,0,0,0.3)] transition-all duration-300"
-              >
-                Criar conta gratuita
-              </Link>
-              <Link
-                to="/login"
-                className="inline-flex justify-center items-center px-6 py-3 rounded-xl border border-emerald-600/80 text-emerald-800 font-semibold text-sm hover:bg-emerald-50/60 transition-all duration-300"
-              >
-                Já sou cliente
-              </Link>
+        {/* SEÇÃO TIME DE DESENVOLVEDORES */}
+        <section className="bg-slate-900 py-12 sm:py-16 border-t border-slate-800">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <header className="text-center max-w-2xl mx-auto mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                Quem está por trás do <span className="text-emerald-400">ZionGED</span>
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-slate-300">
+                Um time apaixonado por tecnologia e por simplificar o dia a dia do RH.
+              </p>
+            </header>
+
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-2">
+              {TEAM_MEMBERS.map((member) => (
+                <div
+                  key={member.name}
+                  className="flex flex-col items-center text-center gap-3"
+                >
+                  <div className="relative">
+                    <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-2 border-emerald-400/80 shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden">
+                      <img
+                        src={member.photoUrl}
+                        alt={member.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-white">{member.name}</p>
+                    <p className="text-xs text-slate-300">{member.role}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -249,11 +291,6 @@ export default function PublicHome() {
     </div>
   );
 }
-
-type FeatureCardProps = {
-  title: string;
-  description: string;
-};
 
 function FeatureCard({ title, description }: FeatureCardProps) {
   return (

@@ -225,7 +225,7 @@ export default function CreateDocument() {
                 </FormRow>
 
                 <FormRow label="Arquivo PDF">
-                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                  <div className="flex max-sm:justify-start max-sm:items-start flex-col sm:flex-row items-center gap-3 w-full">
                     <input
                       ref={fileInputRef}
                       type="file"
