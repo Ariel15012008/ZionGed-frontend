@@ -19,6 +19,28 @@ export default function Home() {
 
   const navigate = useNavigate();
 
+  const getTagValue = (doc: DocumentRecord, chave: string) =>
+    doc.tags.find((t) => t.chave === chave)?.valor ?? "";
+
+  const getOwner = (doc: DocumentRecord) => {
+    return (
+      getTagValue(doc, "Owner") ||
+      getTagValue(doc, "proprietario") ||
+      getTagValue(doc, "proprietário") ||
+      getTagValue(doc, "dono") ||
+      getTagValue(doc, "responsavel") ||
+      getTagValue(doc, "responsável") ||
+      ""
+    );
+  };
+
+  const formatDate = (iso: string) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("pt-BR");
+  };
+
   const handleDownload = async (doc: DocumentRecord) => {
     try {
       setDownloadingId(doc.id);
@@ -50,7 +72,6 @@ export default function Home() {
     });
   };
 
-  // função que realmente chama a API de exclusão
   const deleteDocument = async (doc: DocumentRecord) => {
     try {
       await api.delete(`/documents/${doc.uuid}/delete`);
@@ -64,38 +85,30 @@ export default function Home() {
     }
   };
 
-  // handler chamado pelo botão "Excluir" → apenas pergunta via toast
   const handleDelete = (doc: DocumentRecord) => {
-  const tipo =
-    getTagValue(doc, "tipo de documento") ||
-    getTagValue(doc, "tipo") ||
-    "Documento";
+    const tipo =
+      getTagValue(doc, "tipo de documento") ||
+      getTagValue(doc, "tipo") ||
+      "Documento";
 
-  toast(`Deseja realmente excluir este documento?`, {
-    description: `${tipo} criado em ${formatDate(doc.criado_em)}.`,
-    action: {
-      label: "Excluir",
-      onClick: () => deleteDocument(doc),
-    },
-    dismissible: true,
-    // força as cores via inline-style
-    style: {
-      backgroundColor: "#dc2626", // equivalente ao bg-red-600
-      color: "#fff",              // texto branco
-      border: "none",
-    },
-  });
-};
+    const owner = getOwner(doc);
+    const created = formatDate(doc.criado_em);
 
-
-  const getTagValue = (doc: DocumentRecord, chave: string) =>
-    doc.tags.find((t) => t.chave === chave)?.valor ?? "";
-
-  const formatDate = (iso: string) => {
-    if (!iso) return "";
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString("pt-BR");
+    toast(`Deseja realmente excluir este documento?`, {
+      description: owner
+        ? `${tipo} (Owner: ${owner}) criado em ${created}.`
+        : `${tipo} criado em ${created}.`,
+      action: {
+        label: "Excluir",
+        onClick: () => deleteDocument(doc),
+      },
+      dismissible: true,
+      style: {
+        backgroundColor: "#dc2626",
+        color: "#fff",
+        border: "none",
+      },
+    });
   };
 
   return (
@@ -107,7 +120,6 @@ export default function Home() {
       </div>
 
       <main className="flex-1">
-        {/* Hero + barra de pesquisa */}
         <section className="relative w-full pb-16 sm:pb-20 md:pb-24 lg:pb-28">
           <img
             src={ImagePasta}
@@ -123,7 +135,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Resultados da pesquisa – exibidos na Home */}
         <section className="w-full max-w-5xl mx-auto px-4 pb-12 mt-6 sm:mt-4">
           {isSearching && (
             <p className="mb-4 text-sm text-slate-600">
@@ -146,7 +157,9 @@ export default function Home() {
                     {getTagValue(results[0], "tipo de documento") ||
                       getTagValue(results[0], "tipo") ||
                       "Documento"}{" "}
-                    criado em {formatDate(results[0].criado_em)} com{" "}
+                    criado em {formatDate(results[0].criado_em)}
+                    {getOwner(results[0]) ? ` (Owner: ${getOwner(results[0])})` : ""}{" "}
+                    com{" "}
                     {getTagValue(results[0], "cpf")
                       ? `CPF ${getTagValue(results[0], "cpf")}`
                       : "os parâmetros informados"}
@@ -169,6 +182,9 @@ export default function Home() {
                       </th>
                       <th className="text-left px-6 py-3 font-semibold text-slate-700">
                         CPF
+                      </th>
+                      <th className="text-left px-6 py-3 font-semibold text-slate-700">
+                        Owner
                       </th>
                       <th className="text-left px-6 py-3 font-semibold text-slate-700">
                         Data de criação
@@ -197,6 +213,7 @@ export default function Home() {
                           <td className="px-6 py-3">
                             {getTagValue(doc, "cpf") || "—"}
                           </td>
+                          <td className="px-6 py-3">{getOwner(doc) || "—"}</td>
                           <td className="px-6 py-3">
                             {formatDate(doc.criado_em)}
                           </td>

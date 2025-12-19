@@ -1,7 +1,6 @@
 // src/components/layout/Header.tsx
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "@/utils/axiosInstance";
 import { useUser } from "@/contexts/UserContext";
 
 import { Button } from "@/components/ui/button";
@@ -14,57 +13,32 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
 import { FaUserAlt } from "react-icons/fa";
 
-type MeResponse = {
-  id: number;
-  email: string;
-  pessoa?: {
-    id: number | null;
-    nome?: string | null;
-  } | null;
-};
-
 export default function Header() {
-  const [me, setMe] = useState<MeResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user, isLoading, logout } = useUser();
 
-  const { logout } = useUser(); // usa o logout centralizado
+  const displayName = useMemo(() => {
+    const nome = (user?.nome || "").trim();
+    if (nome) return nome;
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const { data } = await api.get<MeResponse>("/auth/me");
-        if (mounted) setMe(data);
-      } catch {
-        if (mounted) setMe(null);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    const email = (user?.email || "").trim();
+    if (email) return email.split("@")[0] || "Usuário";
 
-  const handleLogout = async () => {
-    await logout(); // o próprio contexto já chama /auth/logout, volta pra "/" e dá reload
-  };
+    return "Usuário";
+  }, [user?.nome, user?.email]);
 
-  const displayName =
-    (me?.pessoa?.nome && me.pessoa.nome.trim()) ||
-    (me?.email ? me.email.split("@")[0] : "") ||
-    "Usuário";
-
-  const initials = (() => {
-    const n = (me?.pessoa?.nome || "").trim();
+  const initials = useMemo(() => {
+    const n = (user?.nome || "").trim();
     if (!n) return "US";
     const parts = n.split(/\s+/).slice(0, 2);
-    return parts.map((p) => p[0]?.toUpperCase()).join("");
-  })();
+    return parts.map((p) => (p[0] || "").toUpperCase()).join("") || "US";
+  }, [user?.nome]);
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <header className="flex h-[65px] w-full items-center bg-linear-to-r from-[#42F51F] via-[#48cf3e] to-[#318844]">
@@ -74,9 +48,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          {loading ? (
-            <div className="h-6 w-40 animate-pulse rounded bg-white/40" />
-          ) : me ? (
+          {isLoading ? null : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -98,7 +70,7 @@ export default function Header() {
                 <DropdownMenuLabel className="text-sm">
                   {displayName}
                   <div className="text-xs font-normal text-muted-foreground truncate">
-                    {me.email}
+                    {user.email}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

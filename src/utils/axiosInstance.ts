@@ -11,7 +11,6 @@ const url =
     : import.meta.env.VITE_API_URL_DEV;
 
 declare module "axios" {
-  // flag interna para evitar loop de refresh
   export interface AxiosRequestConfig {
     _retry?: boolean;
   }
@@ -36,7 +35,12 @@ function shouldSkipRefresh(requestUrl?: string) {
   );
 }
 
-// garante apenas UM refresh em andamento
+let authFailedHandler: (() => void) | null = null;
+
+export function setAuthFailedHandler(handler: () => void) {
+  authFailedHandler = handler;
+}
+
 let refreshPromise: Promise<AxiosResponse<any>> | null = null;
 
 api.interceptors.response.use(
@@ -49,12 +53,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // tenta refresh somente em 401 e se ainda não tentou
-    if (
+    const requestUrl = originalRequest.url || "";
+    const canAttemptRefresh =
       status === 401 &&
       !originalRequest._retry &&
-      !shouldSkipRefresh(originalRequest.url)
-    ) {
+      !shouldSkipRefresh(requestUrl);
+
+    if (canAttemptRefresh) {
       originalRequest._retry = true;
 
       if (!refreshPromise) {
@@ -67,7 +72,16 @@ api.interceptors.response.use(
         await refreshPromise;
         return api(originalRequest);
       } catch (refreshError) {
+        if (authFailedHandler) {
+          authFailedHandler();
+        }
         return Promise.reject(refreshError);
+      }
+    }
+
+    if (status === 401 && !shouldSkipRefresh(requestUrl)) {
+      if (authFailedHandler) {
+        authFailedHandler();
       }
     }
 

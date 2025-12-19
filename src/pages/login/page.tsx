@@ -31,7 +31,7 @@ export default function LoginPage() {
     }
 
     const payload = {
-      user: normalizeUser(username),
+      usuario: normalizeUser(username),
       senha: password,
     };
 

@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import api from "@/utils/axiosInstance";
+import api, { setAuthFailedHandler } from "@/utils/axiosInstance";
 
 interface EmpresaMatricula {
   id: string;
@@ -82,20 +82,13 @@ export function UserProvider({ children }: UserProviderProps) {
   const assignUserIfChanged = (u: User | null) => {
     const prev = userRef.current;
     if (!eqUser(prev, u)) {
-      console.log("[UserContext] assignUserIfChanged", { prev, next: u });
       userRef.current = u;
       setUser(u);
-    } else {
-      console.log("[UserContext] assignUserIfChanged: sem mudança");
     }
   };
 
   const setIsAuthenticatedSafe = (next: boolean) => {
     if (isAuthRef.current !== next) {
-      console.log("[UserContext] setIsAuthenticatedSafe", {
-        prev: isAuthRef.current,
-        next,
-      });
       isAuthRef.current = next;
       _setIsAuthenticated(next);
     }
@@ -104,12 +97,9 @@ export function UserProvider({ children }: UserProviderProps) {
   const fetchMe = async (opts?: { background?: boolean }) => {
     const background = !!opts?.background;
 
-    console.log("[UserContext] fetchMe START", { background });
-
     if (!background) setIsLoading(true);
     try {
       const res = await api.get("/auth/me");
-      console.log("[UserContext] /auth/me response", res.status, res.data);
 
       const is_sapore = res.data.dados?.[0]?.id == 5849;
       Cookies.set("is_sapore", is_sapore ? "true" : "false", {
@@ -117,42 +107,42 @@ export function UserProvider({ children }: UserProviderProps) {
       });
 
       if (res.status === 200) {
-        const data = res.data as User;
-        assignUserIfChanged(data);
+        const raw = res.data as any;
+
+        const mapped: User = {
+          ...raw,
+          email: (raw?.email || "").trim(),
+          nome: (raw?.pessoa?.nome || raw?.nome || "").trim(),
+          cpf: (raw?.pessoa?.cpf || raw?.cpf || "").trim(),
+          gestor: raw?.gestor ?? false,
+        };
+
+        assignUserIfChanged(mapped);
         setIsAuthenticatedSafe(true);
       } else {
         assignUserIfChanged(null);
         setIsAuthenticatedSafe(false);
       }
     } catch (err) {
-      console.log("[UserContext] fetchMe ERROR", err);
       assignUserIfChanged(null);
       setIsAuthenticatedSafe(false);
     } finally {
       if (!background) setIsLoading(false);
       lastSyncRef.current = Date.now();
       inflightRef.current = null;
-      console.log("[UserContext] fetchMe FINALLY", {
-        isLoading: false,
-        isAuthenticated: isAuthRef.current,
-        user: userRef.current,
-      });
     }
   };
 
   const refreshUser = async () => {
-    console.log("[UserContext] refreshUser chamado");
     await fetchMe({ background: false });
   };
 
   const logout = async () => {
-    console.log("[UserContext] logout chamado");
     try {
       Cookies.remove("access_token");
       Cookies.remove("logged_user");
       await api.post("/auth/logout");
     } catch (err) {
-      console.log("[UserContext] logout erro (ignorado)", err);
     } finally {
       setIsAuthenticatedSafe(false);
       assignUserIfChanged(null);
@@ -165,7 +155,12 @@ export function UserProvider({ children }: UserProviderProps) {
   };
 
   useEffect(() => {
-    console.log("[UserProvider] mount → fetchMe initial");
+    setAuthFailedHandler(() => {
+      logout();
+    });
+  }, [logout]);
+
+  useEffect(() => {
     if (!didLogout.current) {
       fetchMe({ background: false });
     }
@@ -238,12 +233,6 @@ export function UserProvider({ children }: UserProviderProps) {
     logout,
     refreshUser,
   };
-
-  console.log("[UserContext] Provider render", {
-    user,
-    isAuthenticated: isAuthRef.current,
-    isLoading,
-  });
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }

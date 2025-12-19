@@ -1,5 +1,5 @@
 // src/components/search-input.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import {
   Select,
@@ -37,6 +37,72 @@ type SearchInputProps = {
 // valor interno para a opção "Busca Livre"
 const FREE_SEARCH_KEY = "__free_search__";
 
+type InputMode = "free" | "cpf" | "competencia" | "default";
+
+function onlyDigits(v: string) {
+  return v.replace(/\D+/g, "");
+}
+
+function formatCPF(digits: string) {
+  const d = onlyDigits(digits).slice(0, 11);
+  // ###.###.###-##
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(
+    9,
+    11
+  )}`;
+}
+
+function sanitizeCompetencia(v: string) {
+  // mantém apenas dígitos e barra
+  let s = v.replace(/[^\d/]+/g, "");
+
+  // remove barras extras (permitir no máximo 1)
+  const parts = s.split("/");
+  if (parts.length > 2) {
+    s = parts[0] + "/" + parts.slice(1).join("");
+  }
+
+  // auto-inserir barra após 2 dígitos (MM/AAAA)
+  const digits = s.replace(/\D+/g, "");
+  if (digits.length >= 3 && !s.includes("/")) {
+    s = digits.slice(0, 2) + "/" + digits.slice(2);
+  } else {
+    if (s.includes("/")) {
+      const [mmRaw, yyyyRaw = ""] = s.split("/");
+      const mm = onlyDigits(mmRaw).slice(0, 2);
+      const yyyy = onlyDigits(yyyyRaw).slice(0, 4);
+      s = mm + (mm.length === 2 || yyyy.length > 0 ? "/" : "") + yyyy;
+    } else {
+      s = digits.slice(0, 2);
+    }
+  }
+
+  return s.slice(0, 7);
+}
+
+function isAllowedKey(e: React.KeyboardEvent<HTMLInputElement>) {
+  if (
+    e.ctrlKey ||
+    e.metaKey ||
+    e.altKey ||
+    e.key === "Backspace" ||
+    e.key === "Delete" ||
+    e.key === "Tab" ||
+    e.key === "Enter" ||
+    e.key === "Escape" ||
+    e.key === "ArrowLeft" ||
+    e.key === "ArrowRight" ||
+    e.key === "Home" ||
+    e.key === "End"
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export default function SearchInput({
   onSearchResults,
   onSearchingChange,
@@ -48,7 +114,14 @@ export default function SearchInput({
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Carrega as tags disponíveis: ["competencia","cpf","tipo", ...]
+  const inputMode: InputMode = useMemo(() => {
+    if (selectedTag === FREE_SEARCH_KEY) return "free";
+    if (selectedTag === "cpf") return "cpf";
+    if (selectedTag === "competencia") return "competencia";
+    return "default";
+  }, [selectedTag]);
+
+  // Carrega as tags disponíveis
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -60,7 +133,6 @@ export default function SearchInput({
 
         setTagOptions(tags);
 
-        // default: se existir CPF, usa cpf; senão, primeira tag; se nada, usa busca livre
         if (tags.length > 0) {
           setSelectedTag(tags.includes("cpf") ? "cpf" : tags[0]);
         } else {
@@ -69,7 +141,6 @@ export default function SearchInput({
       } catch (err) {
         console.error("Erro ao carregar tags", err);
         setError("Não foi possível carregar as opções de pesquisa.");
-        // se der erro, ainda deixamos pelo menos Busca Livre
         setSelectedTag(FREE_SEARCH_KEY);
       } finally {
         setLoadingTags(false);
@@ -79,12 +150,82 @@ export default function SearchInput({
     fetchTags();
   }, []);
 
+  // Ao trocar o tipo, sanitiza o conteúdo atual
+  useEffect(() => {
+    setSearchQuery((prev) => {
+      if (!prev) return prev;
+
+      if (inputMode === "cpf") return formatCPF(prev);
+      if (inputMode === "competencia") return sanitizeCompetencia(prev);
+      return prev;
+    });
+  }, [inputMode]);
+
+  const handleInputChange = (v: string) => {
+    if (inputMode === "cpf") {
+      // mantém máscara visual
+      const digits = onlyDigits(v).slice(0, 11);
+      setSearchQuery(formatCPF(digits));
+      return;
+    }
+
+    if (inputMode === "competencia") {
+      setSearchQuery(sanitizeCompetencia(v));
+      return;
+    }
+
+    setSearchQuery(v);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isAllowedKey(e)) return;
+
+    if (inputMode === "cpf") {
+      // CPF: só dígitos (pontuação a máscara aplica sozinha)
+      if (!/^\d$/.test(e.key)) {
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (inputMode === "competencia") {
+      // competência: dígitos e "/"
+      if (/^\d$/.test(e.key)) return;
+
+      if (e.key === "/") {
+        if (searchQuery.includes("/")) {
+          e.preventDefault();
+          return;
+        }
+        const digits = onlyDigits(searchQuery);
+        if (digits.length < 1) e.preventDefault();
+        return;
+      }
+
+      e.preventDefault();
+    }
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const value = searchQuery.trim();
-    if (!value || !selectedTag) {
-      return;
+    if (!value || !selectedTag) return;
+
+    // validações mínimas
+    if (inputMode === "cpf") {
+      const cpfDigits = onlyDigits(value);
+      if (cpfDigits.length !== 11) {
+        setError("CPF deve conter 11 números.");
+        return;
+      }
+    }
+
+    if (inputMode === "competencia") {
+      if (!/^\d{2}\/\d{4}$/.test(value)) {
+        setError("Competência deve estar no formato MM/AAAA.");
+        return;
+      }
     }
 
     try {
@@ -95,13 +236,14 @@ export default function SearchInput({
       let params: Record<string, string> = {};
 
       if (selectedTag === FREE_SEARCH_KEY) {
-        // Busca Livre -> só parâmetro q
         params = { q: value };
       } else {
-        // Demais tags -> tag_chave + tag_valor (como antes)
+        const tag_valor =
+          inputMode === "cpf" ? onlyDigits(value) : value; // <- CPF vai sem máscara
+
         params = {
           tag_chave: selectedTag,
-          tag_valor: value,
+          tag_valor,
         };
       }
 
@@ -109,8 +251,7 @@ export default function SearchInput({
         params,
       });
 
-      const docs = res.data;
-      onSearchResults?.(docs);
+      onSearchResults?.(res.data);
     } catch (err) {
       console.error("Erro ao buscar documentos", err);
       setError("Erro ao buscar documentos. Tente novamente.");
@@ -121,11 +262,29 @@ export default function SearchInput({
     }
   };
 
+  const placeholder = useMemo(() => {
+    if (loadingTags) return "Carregando opções de pesquisa...";
+    if (inputMode === "cpf") return "Digite o CPF";
+    if (inputMode === "competencia") return "Digite a competência (MM/AAAA)";
+    return "Digite o valor para pesquisar";
+  }, [loadingTags, inputMode]);
+
+  const inputModeAttr = useMemo(() => {
+    if (inputMode === "cpf") return "numeric";
+    if (inputMode === "competencia") return "numeric";
+    return "text";
+  }, [inputMode]);
+
+  const maxLength = useMemo(() => {
+    // CPF com máscara tem 14 chars
+    if (inputMode === "cpf") return 14;
+    if (inputMode === "competencia") return 7;
+    return undefined;
+  }, [inputMode]);
+
   return (
     <form onSubmit={handleSearch} className="w-full">
-      {/* Container: coluna no mobile, linha a partir de sm */}
       <div className="flex flex-col sm:flex-row items-stretch bg-white rounded-xl shadow-xl overflow-hidden">
-        {/* SELECT da tag (cpf, competencia, tipo, etc.) usando shadcn */}
         <Select
           value={selectedTag}
           onValueChange={(value) => setSelectedTag(value)}
@@ -150,10 +309,10 @@ export default function SearchInput({
             />
           </SelectTrigger>
           <SelectContent>
-            {/* Opção manual: Busca Livre */}
-            <SelectItem className="cursor-pointer" value={FREE_SEARCH_KEY}>Busca Livre</SelectItem>
+            <SelectItem className="cursor-pointer" value={FREE_SEARCH_KEY}>
+              Busca Livre
+            </SelectItem>
 
-            {/* Demais tags vindas da API */}
             {tagOptions.map((tag) => (
               <SelectItem className="cursor-pointer" key={tag} value={tag}>
                 {tag.toUpperCase()}
@@ -162,34 +321,31 @@ export default function SearchInput({
           </SelectContent>
         </Select>
 
-        {/* Linha com input + botão (sempre juntos) */}
         <div className="flex w-full items-stretch">
-          {/* wrapper relativo: o span ocupa exatamente a largura do INPUT (flex-1) */}
           <div className="relative flex-1">
             <input
               type="text"
+              inputMode={inputModeAttr as any}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={
-                loadingTags
-                  ? "Carregando opções de pesquisa..."
-                  : "Digite o valor para pesquisar"
-              }
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              maxLength={maxLength}
+              placeholder={placeholder}
               className="
                 peer w-full
-                px-4 py-4 text-sm            
-                sm:px-6 sm:py-10 md:text-base  
+                px-4 py-4 text-sm
+                sm:px-6 sm:py-10 md:text-base
                 text-[#000000] placeholder:text-[#b1b0b0]
                 focus:outline-none bg-transparent
               "
               disabled={loadingTags}
             />
-            {/* linha responsiva (acompanha o padding e a altura do input) */}
+
             <span
               className="
                 pointer-events-none absolute
-                left-4 right-3 bottom-3 h-0.5   /* mobile */
-                sm:left-6 sm:right-4 sm:bottom-9 /* md+ */
+                left-4 right-3 bottom-3 h-0.5
+                sm:left-6 sm:right-4 sm:bottom-9
                 bg-[#D9D9D9] peer-focus:bg-[#b1b0b0] transition-colors
               "
             />
