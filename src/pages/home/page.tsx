@@ -24,13 +24,7 @@ export default function Home() {
 
   const getOwner = (doc: DocumentRecord) => {
     return (
-      getTagValue(doc, "Owner") ||
-      getTagValue(doc, "proprietario") ||
-      getTagValue(doc, "proprietário") ||
-      getTagValue(doc, "dono") ||
-      getTagValue(doc, "responsavel") ||
-      getTagValue(doc, "responsável") ||
-      ""
+      getTagValue(doc, "Owner")
     );
   };
 

@@ -150,6 +150,12 @@ export default function SearchInput({
     fetchTags();
   }, []);
 
+  // Zera o input sempre que trocar a opção de pesquisa
+  useEffect(() => {
+    setSearchQuery("");
+    setError(null);
+  }, [selectedTag]);
+
   // Ao trocar o tipo, sanitiza o conteúdo atual
   useEffect(() => {
     setSearchQuery((prev) => {
@@ -238,8 +244,7 @@ export default function SearchInput({
       if (selectedTag === FREE_SEARCH_KEY) {
         params = { q: value };
       } else {
-        const tag_valor =
-          inputMode === "cpf" ? onlyDigits(value) : value; // <- CPF vai sem máscara
+        const tag_valor = inputMode === "cpf" ? onlyDigits(value) : value;
 
         params = {
           tag_chave: selectedTag,
@@ -364,9 +369,7 @@ export default function SearchInput({
         </div>
       </div>
 
-      {error && (
-        <p className="mt-2 text-xs sm:text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-2 text-xs sm:text-sm text-red-600">{error}</p>}
     </form>
   );
 }
