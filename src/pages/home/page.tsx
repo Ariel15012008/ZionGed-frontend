@@ -98,7 +98,7 @@ export default function Home() {
       },
       dismissible: true,
       style: {
-        backgroundColor: "#dc2626",
+        backgroundColor: "#dea003",
         color: "#fff",
         border: "none",
       },

@@ -11,9 +11,6 @@ import {
 import {
   Home,
   FileText,
-  Search,
-  UploadCloud,
-  Settings,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,22 +28,7 @@ const NAV: NavItem[] = [
     label: "Criar Documentos",
     to: "/documents/create",
     icon: <FileText className="h-4 w-4" />,
-  },
-  {
-    label: "Pesquisas salvas",
-    to: "/saved-searches",
-    icon: <Search className="h-4 w-4" />,
-  },
-  {
-    label: "Uploads",
-    to: "/uploads",
-    icon: <UploadCloud className="h-4 w-4" />,
-  },
-  {
-    label: "Configurações",
-    to: "/settings",
-    icon: <Settings className="h-4 w-4" />,
-  },
+  }
 ];
 
 type SideMenuProps = {

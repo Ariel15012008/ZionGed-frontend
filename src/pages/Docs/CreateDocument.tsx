@@ -220,7 +220,7 @@ export default function CreateDocument() {
                     value={owner}
                     onChange={(e) => setOwner(e.target.value)}
                     className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
-                    placeholder="Ex: Gustavo Muniz"
+                    placeholder="Ex: Ariel Silva"
                   />
                 </FormRow>
 

@@ -44,7 +44,7 @@ export default function Header() {
     <header className="flex h-[65px] w-full items-center bg-linear-to-r from-[#42F51F] via-[#48cf3e] to-[#318844]">
       <div className="flex w-full items-center justify-between px-6 md:px-10">
         <div className="flex items-center gap-3">
-          <h1 className="font-serif text-2xl md:text-3xl">ZionGed</h1>
+            <img className="max-h-56 pt-2 w-52" src="logo.png" alt="logo do site" />
         </div>
 
         <div className="flex items-center gap-3">
