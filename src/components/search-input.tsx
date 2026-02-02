@@ -1,4 +1,3 @@
-// src/components/search-input.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import {
@@ -34,18 +33,16 @@ type SearchInputProps = {
   onSearchingChange?: (isSearching: boolean) => void;
 };
 
-// valor interno para a opção "Busca Livre"
 const FREE_SEARCH_KEY = "__free_search__";
 
 type InputMode = "free" | "cpf" | "competencia" | "default";
 
 function onlyDigits(v: string) {
-  return v.replace(/\D+/g, "");
+  return (v ?? "").replace(/\D+/g, "");
 }
 
 function formatCPF(digits: string) {
   const d = onlyDigits(digits).slice(0, 11);
-  // ###.###.###-##
   if (d.length <= 3) return d;
   if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
   if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
@@ -56,31 +53,15 @@ function formatCPF(digits: string) {
 }
 
 function sanitizeCompetencia(v: string) {
-  // mantém apenas dígitos e barra
-  let s = v.replace(/[^\d/]+/g, "");
+  const digits = onlyDigits(v).slice(0, 6); // MMAAAA
+  return digits;
+}
 
-  // remove barras extras (permitir no máximo 1)
-  const parts = s.split("/");
-  if (parts.length > 2) {
-    s = parts[0] + "/" + parts.slice(1).join("");
-  }
-
-  // auto-inserir barra após 2 dígitos (MM/AAAA)
-  const digits = s.replace(/\D+/g, "");
-  if (digits.length >= 3 && !s.includes("/")) {
-    s = digits.slice(0, 2) + "/" + digits.slice(2);
-  } else {
-    if (s.includes("/")) {
-      const [mmRaw, yyyyRaw = ""] = s.split("/");
-      const mm = onlyDigits(mmRaw).slice(0, 2);
-      const yyyy = onlyDigits(yyyyRaw).slice(0, 4);
-      s = mm + (mm.length === 2 || yyyy.length > 0 ? "/" : "") + yyyy;
-    } else {
-      s = digits.slice(0, 2);
-    }
-  }
-
-  return s.slice(0, 7);
+function competenciaToBackend(mmYyyy: string) {
+  const d = onlyDigits(mmYyyy).slice(0, 6);
+  const mm = d.slice(0, 2);
+  const yyyy = d.slice(2, 6);
+  return `${yyyy}-${mm}`; // YYYY-MM
 }
 
 function isAllowedKey(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -121,7 +102,6 @@ export default function SearchInput({
     return "default";
   }, [selectedTag]);
 
-  // Carrega as tags disponíveis
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -150,17 +130,14 @@ export default function SearchInput({
     fetchTags();
   }, []);
 
-  // Zera o input sempre que trocar a opção de pesquisa
   useEffect(() => {
     setSearchQuery("");
     setError(null);
   }, [selectedTag]);
 
-  // Ao trocar o tipo, sanitiza o conteúdo atual
   useEffect(() => {
     setSearchQuery((prev) => {
       if (!prev) return prev;
-
       if (inputMode === "cpf") return formatCPF(prev);
       if (inputMode === "competencia") return sanitizeCompetencia(prev);
       return prev;
@@ -169,7 +146,6 @@ export default function SearchInput({
 
   const handleInputChange = (v: string) => {
     if (inputMode === "cpf") {
-      // mantém máscara visual
       const digits = onlyDigits(v).slice(0, 11);
       setSearchQuery(formatCPF(digits));
       return;
@@ -187,28 +163,13 @@ export default function SearchInput({
     if (isAllowedKey(e)) return;
 
     if (inputMode === "cpf") {
-      // CPF: só dígitos (pontuação a máscara aplica sozinha)
-      if (!/^\d$/.test(e.key)) {
-        e.preventDefault();
-      }
+      if (!/^\d$/.test(e.key)) e.preventDefault();
       return;
     }
 
     if (inputMode === "competencia") {
-      // competência: dígitos e "/"
-      if (/^\d$/.test(e.key)) return;
-
-      if (e.key === "/") {
-        if (searchQuery.includes("/")) {
-          e.preventDefault();
-          return;
-        }
-        const digits = onlyDigits(searchQuery);
-        if (digits.length < 1) e.preventDefault();
-        return;
-      }
-
-      e.preventDefault();
+      if (!/^\d$/.test(e.key)) e.preventDefault();
+      return;
     }
   };
 
@@ -218,7 +179,6 @@ export default function SearchInput({
     const value = searchQuery.trim();
     if (!value || !selectedTag) return;
 
-    // validações mínimas
     if (inputMode === "cpf") {
       const cpfDigits = onlyDigits(value);
       if (cpfDigits.length !== 11) {
@@ -228,8 +188,21 @@ export default function SearchInput({
     }
 
     if (inputMode === "competencia") {
-      if (!/^\d{2}\/\d{4}$/.test(value)) {
-        setError("Competência deve estar no formato MM/AAAA.");
+      const digits = onlyDigits(value);
+      if (!/^\d{6}$/.test(digits)) {
+        setError("Competência deve estar no formato MMAAAA (ex: 052026).");
+        return;
+      }
+
+      const mm = parseInt(digits.slice(0, 2), 10);
+      const yyyy = parseInt(digits.slice(2, 6), 10);
+
+      if (Number.isNaN(mm) || mm < 1 || mm > 12) {
+        setError("Mês inválido na competência. Use 01 a 12.");
+        return;
+      }
+      if (Number.isNaN(yyyy) || yyyy < 1900) {
+        setError("Ano inválido na competência.");
         return;
       }
     }
@@ -244,7 +217,13 @@ export default function SearchInput({
       if (selectedTag === FREE_SEARCH_KEY) {
         params = { q: value };
       } else {
-        const tag_valor = inputMode === "cpf" ? onlyDigits(value) : value;
+        let tag_valor = value;
+
+        if (inputMode === "cpf") {
+          tag_valor = onlyDigits(value);
+        } else if (inputMode === "competencia") {
+          tag_valor = competenciaToBackend(value); // YYYY-MM
+        }
 
         params = {
           tag_chave: selectedTag,
@@ -270,7 +249,7 @@ export default function SearchInput({
   const placeholder = useMemo(() => {
     if (loadingTags) return "Carregando opções de pesquisa...";
     if (inputMode === "cpf") return "Digite o CPF";
-    if (inputMode === "competencia") return "Digite a competência (MM/AAAA)";
+    if (inputMode === "competencia") return "Digite a competência (MMAAAA)";
     return "Digite o valor para pesquisar";
   }, [loadingTags, inputMode]);
 
@@ -281,9 +260,8 @@ export default function SearchInput({
   }, [inputMode]);
 
   const maxLength = useMemo(() => {
-    // CPF com máscara tem 14 chars
     if (inputMode === "cpf") return 14;
-    if (inputMode === "competencia") return 7;
+    if (inputMode === "competencia") return 6; // MMAAAA
     return undefined;
   }, [inputMode]);
 

@@ -1,4 +1,3 @@
-// src/pages/home/page.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/header";
@@ -23,9 +22,7 @@ export default function Home() {
     doc.tags.find((t) => t.chave === chave)?.valor ?? "";
 
   const getOwner = (doc: DocumentRecord) => {
-    return (
-      getTagValue(doc, "Owner")
-    );
+    return getTagValue(doc, "Owner");
   };
 
   const formatDate = (iso: string) => {
@@ -33,6 +30,37 @@ export default function Home() {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleDateString("pt-BR");
+  };
+
+  const formatCompetenciaDisplay = (raw: string) => {
+    const v = (raw ?? "").trim();
+    if (!v) return "";
+
+    const m1 = v.match(/^(\d{4})-(\d{2})$/); // YYYY-MM
+    if (m1) return `${m1[2]}${m1[1]}`;
+
+    const m2 = v.match(/^(\d{2})\/(\d{4})$/); // MM/YYYY
+    if (m2) return `${m2[1]}${m2[2]}`;
+
+    const digits = v.replace(/\D/g, "");
+    if (digits.length === 6) {
+      // pode ser YYYYMM ou MMYYYY
+      const a = parseInt(digits.slice(0, 2), 10);
+      const b = parseInt(digits.slice(2, 4), 10);
+      if (a >= 1 && a <= 12) return digits; // MMYYYY
+      if (b >= 1 && b <= 12) return `${digits.slice(4, 6)}${digits.slice(
+        0,
+        4
+      )}`; // YYYYMM -> MMYYYY
+    }
+
+    return v;
+  };
+
+  const getCompetenciaDisplay = (doc: DocumentRecord) => {
+    const raw = getTagValue(doc, "competencia");
+    const formatted = formatCompetenciaDisplay(raw);
+    return formatted || "—";
   };
 
   const handleDownload = async (doc: DocumentRecord) => {
@@ -152,7 +180,9 @@ export default function Home() {
                       getTagValue(results[0], "tipo") ||
                       "Documento"}{" "}
                     criado em {formatDate(results[0].criado_em)}
-                    {getOwner(results[0]) ? ` (Owner: ${getOwner(results[0])})` : ""}{" "}
+                    {getOwner(results[0])
+                      ? ` (Owner: ${getOwner(results[0])})`
+                      : ""}{" "}
                     com{" "}
                     {getTagValue(results[0], "cpf")
                       ? `CPF ${getTagValue(results[0], "cpf")}`
@@ -201,9 +231,7 @@ export default function Home() {
                               getTagValue(doc, "tipo") ||
                               "—"}
                           </td>
-                          <td className="px-6 py-3">
-                            {getTagValue(doc, "competencia") || "—"}
-                          </td>
+                          <td className="px-6 py-3">{getCompetenciaDisplay(doc)}</td>
                           <td className="px-6 py-3">
                             {getTagValue(doc, "cpf") || "—"}
                           </td>
