@@ -1,4 +1,3 @@
-// src/components/layout/Header.tsx
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
@@ -44,7 +43,15 @@ export default function Header() {
     <header className="flex h-[65px] w-full items-center bg-linear-to-r from-[#42F51F] via-[#48cf3e] to-[#318844]">
       <div className="flex w-full items-center justify-between px-6 md:px-10">
         <div className="flex items-center gap-3">
-            <img className="max-h-56 pt-2 w-52" src="logo.png" alt="logo do site" />
+          <img
+            className="max-h-56 pt-2 w-52"
+            src="/logo.png"
+            alt="logo do site"
+            onError={(e) => {
+              const img = e.currentTarget;
+              img.style.display = "none";
+            }}
+          />
         </div>
 
         <div className="flex items-center gap-3">
