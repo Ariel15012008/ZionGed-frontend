@@ -28,8 +28,15 @@ export interface DocumentRecord {
   tags: DocumentTag[];
 }
 
+export type SearchFilters = {
+  cliente_id?: number | null;
+  tag_chave?: string | null;
+  tag_valor?: string | null;
+  q?: string | null;
+};
+
 type SearchInputProps = {
-  onSearchResults?: (docs: DocumentRecord[]) => void;
+  onSearch?: (filters: SearchFilters) => void | Promise<void>;
   onSearchingChange?: (isSearching: boolean) => void;
 };
 
@@ -46,10 +53,7 @@ function formatCPF(digits: string) {
   if (d.length <= 3) return d;
   if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
   if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
-  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(
-    9,
-    11
-  )}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9, 11)}`;
 }
 
 function sanitizeCompetencia(v: string) {
@@ -84,10 +88,7 @@ function isAllowedKey(e: React.KeyboardEvent<HTMLInputElement>) {
   return false;
 }
 
-export default function SearchInput({
-  onSearchResults,
-  onSearchingChange,
-}: SearchInputProps) {
+export default function SearchInput({ onSearch, onSearchingChange }: SearchInputProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>("");
@@ -212,10 +213,10 @@ export default function SearchInput({
       setError(null);
       onSearchingChange?.(true);
 
-      let params: Record<string, string> = {};
+      let filters: SearchFilters = {};
 
       if (selectedTag === FREE_SEARCH_KEY) {
-        params = { q: value };
+        filters = { q: value };
       } else {
         let tag_valor = value;
 
@@ -225,21 +226,16 @@ export default function SearchInput({
           tag_valor = competenciaToBackend(value); // YYYY-MM
         }
 
-        params = {
+        filters = {
           tag_chave: selectedTag,
           tag_valor,
         };
       }
 
-      const res = await api.get<DocumentRecord[]>("/documents/search", {
-        params,
-      });
-
-      onSearchResults?.(res.data);
+      await onSearch?.(filters);
     } catch (err) {
-      console.error("Erro ao buscar documentos", err);
+      console.error("Erro ao disparar busca", err);
       setError("Erro ao buscar documentos. Tente novamente.");
-      onSearchResults?.([]);
     } finally {
       setSearching(false);
       onSearchingChange?.(false);
