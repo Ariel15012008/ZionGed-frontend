@@ -376,7 +376,7 @@ export default function Home() {
                     })}
                   </tbody>
                 </table>
-              </div>
+              </div>  
 
               {meta && (
                 <div className="px-4 sm:px-6 py-4 border-t">
@@ -393,7 +393,7 @@ export default function Home() {
                               onClick={() => changePageSize(n)}
                               disabled={isSearching}
                               className={[
-                                "h-9 w-10 rounded-md border text-sm transition-colors",
+                                "h-9 w-10 rounded-md border text-sm transition-colors hover:cursor-pointer",
                                 active
                                   ? "bg-emerald-50 border-emerald-600 text-emerald-700"
                                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50",
@@ -418,18 +418,18 @@ export default function Home() {
                         type="button"
                         onClick={() => goToPage(page - 1)}
                         disabled={!meta.has_prev || isSearching}
-                        className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
 
                       {showPagination && (
                         <div className="flex-1 overflow-x-auto">
-                          <div className="flex items-center gap-1 min-w-max px-1">
+                          <div className="flex items-center gap-1 min-w-max px-1 ">
                             {pageList.map((p, idx) => {
                               if (p === "...") {
                                 return (
-                                  <span key={`dots-${idx}`} className="px-2 text-slate-400">
+                                  <span key={`dots-${idx}`} className="px-2 text-slate-400 ">
                                     ...
                                   </span>
                                 );
@@ -442,7 +442,7 @@ export default function Home() {
                                   onClick={() => goToPage(p)}
                                   disabled={isSearching}
                                   className={[
-                                    "h-9 min-w-9 px-3 rounded-md border text-sm transition-colors whitespace-nowrap",
+                                    "h-9 min-w-9 px-3 rounded-md border text-sm transition-colors whitespace-nowrap hover:cursor-pointer",
                                     active
                                       ? "bg-emerald-50 border-emerald-600 text-emerald-700"
                                       : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50",
@@ -461,7 +461,7 @@ export default function Home() {
                         type="button"
                         onClick={() => goToPage(page + 1)}
                         disabled={!meta.has_next || isSearching}
-                        className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
