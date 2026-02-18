@@ -383,7 +383,7 @@ export default function Home() {
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     {/* LEFT */}
                     <div className="flex items-center justify-between gap-3 sm:justify-start">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ">
                         {[5, 10, 20].map((n) => {
                           const active = pageSize === n;
                           return (

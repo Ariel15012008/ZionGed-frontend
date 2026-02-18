@@ -5,10 +5,59 @@ import axios, {
   type AxiosRequestConfig,
 } from "axios";
 
-const url =
-  import.meta.env.VITE_API_ENVIRONMENT === "prod"
-    ? import.meta.env.VITE_API_URL_PROD
-    : import.meta.env.VITE_API_URL_DEV;
+/**
+ * Runtime config (S3) + fallback para Vite env (dev/build)
+ * IMPORTANTE: config.js deve setar window.__APP_CONFIG__ antes do bundle.
+ *
+ * Exemplo public/config.js:
+ * window.__APP_CONFIG__ = {
+ *   VITE_API_URL_PROD: "https://rh.ziondocs.com.br/",
+ *   VITE_API_URL_DEV: "http://localhost:8000/",
+ *   VITE_API_ENVIRONMENT: "dev",
+ * };
+ */
+type RuntimeConfig = {
+  VITE_API_URL_PROD?: string;
+  VITE_API_URL_DEV?: string;
+  VITE_API_ENVIRONMENT?: "dev" | "prod";
+};
+
+declare global {
+  interface Window {
+    __APP_CONFIG__?: RuntimeConfig;
+  }
+}
+
+function getRuntimeConfig(): Required<RuntimeConfig> {
+  const fromWindow = (typeof window !== "undefined" ? window.__APP_CONFIG__ : undefined) || {};
+
+  // fallback para import.meta.env (build/dev)
+  const VITE_API_URL_PROD =
+    fromWindow.VITE_API_URL_PROD ||
+    (import.meta.env.VITE_API_URL_PROD as string) ||
+    "https://rh.ziondocs.com.br/";
+
+  const VITE_API_URL_DEV =
+    fromWindow.VITE_API_URL_DEV ||
+    (import.meta.env.VITE_API_URL_DEV as string) ||
+    "http://localhost:8000/";
+
+  const VITE_API_ENVIRONMENT =
+    fromWindow.VITE_API_ENVIRONMENT ||
+    (import.meta.env.VITE_API_ENVIRONMENT as "dev" | "prod") ||
+    "dev";
+
+  return {
+    VITE_API_URL_PROD,
+    VITE_API_URL_DEV,
+    VITE_API_ENVIRONMENT,
+  };
+}
+
+const cfg = getRuntimeConfig();
+
+const baseURL =
+  cfg.VITE_API_ENVIRONMENT === "prod" ? cfg.VITE_API_URL_PROD : cfg.VITE_API_URL_DEV;
 
 declare module "axios" {
   export interface AxiosRequestConfig {
@@ -17,7 +66,7 @@ declare module "axios" {
 }
 
 const api = axios.create({
-  baseURL: url,
+  baseURL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -72,17 +121,13 @@ api.interceptors.response.use(
         await refreshPromise;
         return api(originalRequest);
       } catch (refreshError) {
-        if (authFailedHandler) {
-          authFailedHandler();
-        }
+        if (authFailedHandler) authFailedHandler();
         return Promise.reject(refreshError);
       }
     }
 
     if (status === 401 && !shouldSkipRefresh(requestUrl)) {
-      if (authFailedHandler) {
-        authFailedHandler();
-      }
+      if (authFailedHandler) authFailedHandler();
     }
 
     return Promise.reject(error);
