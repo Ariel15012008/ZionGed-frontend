@@ -54,7 +54,7 @@ export default function DocumentEditPage() {
   const [tipoDocumento, setTipoDocumento] = useState("");
   const [cpf, setCpf] = useState("");
   const [competencia, setCompetencia] = useState("");
-  const [owner, setOwner] = useState("");
+  const [proprietario, setProprietario] = useState("");
 
   useEffect(() => {
     if (!doc) {
@@ -74,7 +74,7 @@ export default function DocumentEditPage() {
     const compValue = getTagValue(doc, "competencia");
     setCompetencia(formatCompetencia(compValue));
 
-    setOwner(getTagValue(doc, "Owner"));
+    setProprietario(getTagValue(doc, "proprietario") || getTagValue(doc, "Owner"));
   }, [doc]);
 
   const handleCpfChange = (value: string) => {
@@ -105,7 +105,7 @@ export default function DocumentEditPage() {
         { chave: "tipo", valor: tipoDocumento.trim() },
         { chave: "cpf", valor: cpfRaw },
         { chave: "competencia", valor: competenciaRaw },
-        { chave: "Owner", valor: owner.trim() },
+        { chave: "proprietario", valor: proprietario.trim() },
       ].filter((t) => t.valor !== ""),
     };
 
@@ -195,8 +195,7 @@ export default function DocumentEditPage() {
                   Edição de documento
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-600 text-center sm:text-right">
-                  Atualize as informações principais deste arquivo para
-                  facilitar a busca e a organização no GED.
+                  Atualize as informações principais deste arquivo para facilitar a busca e a organização no GED.
                 </p>
               </div>
             </div>
@@ -248,11 +247,11 @@ export default function DocumentEditPage() {
                   />
                 </FormRow>
 
-                <FormRow label="Owner">
+                <FormRow label="Proprietário">
                   <input
                     type="text"
-                    value={owner}
-                    onChange={(e) => setOwner(e.target.value)}
+                    value={proprietario}
+                    onChange={(e) => setProprietario(e.target.value)}
                     className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duração-200"
                     placeholder="Gustavo Muniz"
                   />

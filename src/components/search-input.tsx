@@ -289,14 +289,21 @@ export default function SearchInput({ onSearch, onSearchingChange }: SearchInput
           </SelectTrigger>
           <SelectContent>
             <SelectItem className="cursor-pointer" value={FREE_SEARCH_KEY}>
-              Busca Livre
+              BUSCA LIVRE
             </SelectItem>
 
-            {tagOptions.map((tag) => (
-              <SelectItem className="cursor-pointer" key={tag} value={tag}>
-                {tag.toUpperCase()}
-              </SelectItem>
-            ))}
+            {tagOptions.map((tag) => {
+              const label =
+                tag === "Owner" || tag === "proprietario"
+                  ? "PROPRIETÁRIO"
+                  : tag.toUpperCase();
+
+              return (
+                <SelectItem className="cursor-pointer" key={tag} value={tag}>
+                  {label}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
 

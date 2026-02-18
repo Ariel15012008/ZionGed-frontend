@@ -53,7 +53,6 @@ function buildPageList(current: number, total: number) {
 
   for (let p = start; p <= end; p++) pages.push(p);
 
-  // se ainda existe página depois do bloco, mostra "..."
   if (end < total) pages.push("...");
 
   return pages;
@@ -77,7 +76,9 @@ export default function Home() {
   const getTagValue = (doc: DocumentRecord, chave: string) =>
     doc.tags.find((t) => t.chave === chave)?.valor ?? "";
 
-  const getOwner = (doc: DocumentRecord) => getTagValue(doc, "Owner");
+  // ✅ agora é Proprietário (compatível com legado "Owner")
+  const getProprietario = (doc: DocumentRecord) =>
+    getTagValue(doc, "proprietario") || getTagValue(doc, "Owner");
 
   const formatDate = (iso: string) => {
     if (!iso) return "";
@@ -222,12 +223,12 @@ export default function Home() {
       getTagValue(doc, "tipo") ||
       "Documento";
 
-    const owner = getOwner(doc);
+    const proprietario = getProprietario(doc);
     const created = formatDate(doc.criado_em);
 
     toast(`Deseja realmente excluir este documento?`, {
-      description: owner
-        ? `${tipo} (Owner: ${owner}) criado em ${created}.`
+      description: proprietario
+        ? `${tipo} (Proprietário: ${proprietario}) criado em ${created}.`
         : `${tipo} criado em ${created}.`,
       action: {
         label: "Excluir",
@@ -243,7 +244,10 @@ export default function Home() {
   };
 
   const totalPages = meta?.total_pages ?? 0;
-  const pageList = useMemo(() => buildPageList(page, totalPages), [page, totalPages]);
+  const pageList = useMemo(
+    () => buildPageList(page, totalPages),
+    [page, totalPages]
+  );
   const showPagination = Boolean(meta && meta.total_pages > 1);
 
   return (
@@ -263,7 +267,10 @@ export default function Home() {
           />
 
           <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] sm:w-[85%] md:w-[70%] max-w-3xl px-3">
-            <SearchInput onSearch={handleSearch} onSearchingChange={setIsSearching} />
+            <SearchInput
+              onSearch={handleSearch}
+              onSearchingChange={setIsSearching}
+            />
           </div>
         </section>
 
@@ -307,7 +314,7 @@ export default function Home() {
                         CPF
                       </th>
                       <th className="text-left px-6 py-3 font-semibold text-slate-700">
-                        Owner
+                        Proprietário
                       </th>
                       <th className="text-left px-6 py-3 font-semibold text-slate-700">
                         Data de criação
@@ -321,16 +328,27 @@ export default function Home() {
                     {results.map((doc) => {
                       const isThisDownloading = downloadingId === doc.id;
                       return (
-                        <tr key={doc.id} className="border-t hover:bg-slate-50/60">
+                        <tr
+                          key={doc.id}
+                          className="border-t hover:bg-slate-50/60"
+                        >
                           <td className="px-6 py-3">
                             {getTagValue(doc, "tipo de documento") ||
                               getTagValue(doc, "tipo") ||
                               "—"}
                           </td>
-                          <td className="px-6 py-3">{getCompetenciaDisplay(doc)}</td>
-                          <td className="px-6 py-3">{getTagValue(doc, "cpf") || "—"}</td>
-                          <td className="px-6 py-3">{getOwner(doc) || "—"}</td>
-                          <td className="px-6 py-3">{formatDate(doc.criado_em)}</td>
+                          <td className="px-6 py-3">
+                            {getCompetenciaDisplay(doc)}
+                          </td>
+                          <td className="px-6 py-3">
+                            {getTagValue(doc, "cpf") || "—"}
+                          </td>
+                          <td className="px-6 py-3">
+                            {getProprietario(doc) || "—"}
+                          </td>
+                          <td className="px-6 py-3">
+                            {formatDate(doc.criado_em)}
+                          </td>
                           <td className="px-6 py-3 text-right">
                             <div className="flex justify-end gap-2">
                               <button
@@ -376,7 +394,7 @@ export default function Home() {
                     })}
                   </tbody>
                 </table>
-              </div>  
+              </div>
 
               {meta && (
                 <div className="px-4 sm:px-6 py-4 border-t">
@@ -397,7 +415,9 @@ export default function Home() {
                                 active
                                   ? "bg-emerald-50 border-emerald-600 text-emerald-700"
                                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50",
-                                isSearching ? "opacity-60 cursor-not-allowed" : "",
+                                isSearching
+                                  ? "opacity-60 cursor-not-allowed"
+                                  : "",
                               ].join(" ")}
                             >
                               {n}
@@ -408,7 +428,8 @@ export default function Home() {
 
                       <div className="text-xs sm:text-sm text-slate-500 lg:hidden">
                         Página <b className="text-slate-700">{meta.page}</b> de{" "}
-                        <b className="text-slate-700">{meta.total_pages}</b> ({meta.total_items} itens)
+                        <b className="text-slate-700">{meta.total_pages}</b> (
+                        {meta.total_items} itens)
                       </div>
                     </div>
 
@@ -429,7 +450,10 @@ export default function Home() {
                             {pageList.map((p, idx) => {
                               if (p === "...") {
                                 return (
-                                  <span key={`dots-${idx}`} className="px-2 text-slate-400 ">
+                                  <span
+                                    key={`dots-${idx}`}
+                                    className="px-2 text-slate-400 "
+                                  >
                                     ...
                                   </span>
                                 );
@@ -446,7 +470,9 @@ export default function Home() {
                                     active
                                       ? "bg-emerald-50 border-emerald-600 text-emerald-700"
                                       : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50",
-                                    isSearching ? "opacity-60 cursor-not-allowed" : "",
+                                    isSearching
+                                      ? "opacity-60 cursor-not-allowed"
+                                      : "",
                                   ].join(" ")}
                                 >
                                   {p}
@@ -470,7 +496,8 @@ export default function Home() {
                     {/* META desktop */}
                     <div className="hidden lg:block text-sm text-slate-500">
                       Página <b className="text-slate-700">{meta.page}</b> de{" "}
-                      <b className="text-slate-700">{meta.total_pages}</b> ({meta.total_items} itens)
+                      <b className="text-slate-700">{meta.total_pages}</b> (
+                      {meta.total_items} itens)
                     </div>
                   </div>
                 </div>
